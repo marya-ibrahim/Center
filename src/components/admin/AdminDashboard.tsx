@@ -5,6 +5,8 @@ import { Logo } from '../Logo';
 import { AdminBooksPage } from './AdminBooksPage';
 import { AdminMembersPage } from './AdminMembersPage';
 import { AdminDashboardHome } from './AdminDashboardHome';
+import { AdminHistoryPage } from './AdminHistoryPage';
+import { AdminBorrowedBooksPage } from './AdminBorrowedBooksPage';
 
 interface AdminDashboardProps {
   user: User;
@@ -12,7 +14,7 @@ interface AdminDashboardProps {
 }
 
 export function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
-  const [activePage, setActivePage] = useState<'home' | 'books' | 'members'>('home');
+  const [activePage, setActivePage] = useState<'home' | 'books' | 'borrowed' | 'members' | 'history'>('home');
 
   return (
     <div className="min-vh-100" style={{ backgroundColor: '#f8f9fa' }}>
@@ -44,11 +46,25 @@ export function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
                 Books
               </Nav.Link>
               <Nav.Link 
+                active={activePage === 'borrowed'}
+                onClick={() => setActivePage('borrowed')}
+                style={{ fontWeight: activePage === 'borrowed' ? '600' : '400' }}
+              >
+                Borrowed Books
+              </Nav.Link>
+              <Nav.Link 
                 active={activePage === 'members'}
                 onClick={() => setActivePage('members')}
                 style={{ fontWeight: activePage === 'members' ? '600' : '400' }}
               >
                 Members
+              </Nav.Link>
+              <Nav.Link 
+                active={activePage === 'history'}
+                onClick={() => setActivePage('history')}
+                style={{ fontWeight: activePage === 'history' ? '600' : '400' }}
+              >
+                History
               </Nav.Link>
             </Nav>
             <Dropdown align="end">
@@ -81,7 +97,9 @@ export function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
       {/* Page Content */}
       {activePage === 'home' && <AdminDashboardHome />}
       {activePage === 'books' && <AdminBooksPage />}
+      {activePage === 'borrowed' && <AdminBorrowedBooksPage />}
       {activePage === 'members' && <AdminMembersPage />}
+      {activePage === 'history' && <AdminHistoryPage />}
     </div>
   );
 }

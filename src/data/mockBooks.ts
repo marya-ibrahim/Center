@@ -9,6 +9,8 @@ export const mockBooks: Book[] = [
     category: 'Fiction',
     publishYear: 1960,
     status: 'available',
+    totalCopies: 5,
+    availableCopies: 5,
     coverImage: 'https://images.unsplash.com/photo-1763768861268-cb6b54173dbf?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjbGFzc2ljJTIwYm9vayUyMGNvdmVyfGVufDF8fHx8MTc2Nzg4NDMzNnww&ixlib=rb-4.1.0&q=80&w=400',
     description: 'A gripping tale of racial injustice and childhood innocence in the American South.'
   },
@@ -20,6 +22,8 @@ export const mockBooks: Book[] = [
     category: 'Fiction',
     publishYear: 1949,
     status: 'available',
+    totalCopies: 3,
+    availableCopies: 2,
     coverImage: 'https://images.unsplash.com/photo-1657550650205-a351418bbf89?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx2aW50YWdlJTIwYm9vayUyMHNwaW5lfGVufDF8fHx8MTc2Nzg5MTAyNXww&ixlib=rb-4.1.0&q=80&w=400',
     description: 'A dystopian social science fiction novel and cautionary tale about totalitarianism.'
   },
@@ -31,6 +35,8 @@ export const mockBooks: Book[] = [
     category: 'Fiction',
     publishYear: 1925,
     status: 'available',
+    totalCopies: 4,
+    availableCopies: 3,
     coverImage: 'https://images.unsplash.com/photo-1763768861268-cb6b54173dbf?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjbGFzc2ljJTIwYm9vayUyMGNvdmVyfGVufDF8fHx8MTc2Nzg4NDMzNnww&ixlib=rb-4.1.0&q=80&w=400',
     description: 'The story of the mysteriously wealthy Jay Gatsby and his love for Daisy Buchanan.'
   },
@@ -42,6 +48,8 @@ export const mockBooks: Book[] = [
     category: 'Non-Fiction',
     publishYear: 2011,
     status: 'available',
+    totalCopies: 6,
+    availableCopies: 6,
     coverImage: 'https://images.unsplash.com/photo-1725869973689-425c74f79a48?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzY2llbmNlJTIwYm9vayUyMGNvdmVyfGVufDF8fHx8MTc2Nzk4MDI0MHww&ixlib=rb-4.1.0&q=80&w=400',
     description: 'A brief history of humankind from the Stone Age to the modern age.'
   },
@@ -53,6 +61,8 @@ export const mockBooks: Book[] = [
     category: 'Fantasy',
     publishYear: 1937,
     status: 'available',
+    totalCopies: 4,
+    availableCopies: 4,
     coverImage: 'https://images.unsplash.com/photo-1711185892790-4cabb6701cb8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmYW50YXN5JTIwYm9vayUyMGNvdmVyfGVufDF8fHx8MTc2Nzk3NjExMHww&ixlib=rb-4.1.0&q=80&w=400',
     description: 'The adventures of hobbit Bilbo Baggins as he journeys to reclaim treasure.'
   },
@@ -64,6 +74,8 @@ export const mockBooks: Book[] = [
     category: 'Biography',
     publishYear: 2018,
     status: 'available',
+    totalCopies: 5,
+    availableCopies: 4,
     coverImage: 'https://images.unsplash.com/photo-1758803184789-a5dd872fe82e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBib29rJTIwY292ZXIlMjBkZXNpZ258ZW58MXx8fHwxNzY3OTgwMjQwfDA&ixlib=rb-4.1.0&q=80&w=400',
     description: 'A memoir about a young woman who leaves her survivalist family to pursue education.'
   },
@@ -75,6 +87,8 @@ export const mockBooks: Book[] = [
     category: 'Fiction',
     publishYear: 2020,
     status: 'available',
+    totalCopies: 3,
+    availableCopies: 3,
     coverImage: 'https://images.unsplash.com/photo-1657550650205-a351418bbf89?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx2aW50YWdlJTIwYm9vayUyMHNwaW5lfGVufDF8fHx8MTc2Nzg5MTAyNXww&ixlib=rb-4.1.0&q=80&w=400',
     description: 'A library between life and death where you can try out different versions of your life.'
   },
@@ -86,6 +100,8 @@ export const mockBooks: Book[] = [
     category: 'Self-Help',
     publishYear: 2018,
     status: 'available',
+    totalCopies: 7,
+    availableCopies: 7,
     coverImage: 'https://images.unsplash.com/photo-1758803184789-a5dd872fe82e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBib29rJTIwY292ZXIlMjBkZXNpZ258ZW58MXx8fHwxNzY3OTgwMjQwfDA&ixlib=rb-4.1.0&q=80&w=400',
     description: 'An easy and proven way to build good habits and break bad ones.'
   },
@@ -97,6 +113,8 @@ export const mockBooks: Book[] = [
     category: 'Fantasy',
     publishYear: 1997,
     status: 'available',
+    totalCopies: 8,
+    availableCopies: 8,
     coverImage: 'https://images.unsplash.com/photo-1711185892790-4cabb6701cb8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmYW50YXN5JTIwYm9vayUyMGNvdmVyfGVufDF8fHx8MTc2Nzk3NjExMHww&ixlib=rb-4.1.0&q=80&w=400',
     description: 'The magical journey of a young wizard begins at Hogwarts School.'
   },
@@ -108,6 +126,8 @@ export const mockBooks: Book[] = [
     category: 'Fiction',
     publishYear: 1988,
     status: 'available',
+    totalCopies: 5,
+    availableCopies: 5,
     coverImage: 'https://images.unsplash.com/photo-1763768861268-cb6b54173dbf?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjbGFzc2ljJTIwYm9vayUyMGNvdmVyfGVufDF8fHx8MTc2Nzg4NDMzNnww&ixlib=rb-4.1.0&q=80&w=400',
     description: 'A fable about following your dreams and listening to your heart.'
   },
@@ -119,6 +139,8 @@ export const mockBooks: Book[] = [
     category: 'Psychology',
     publishYear: 2011,
     status: 'available',
+    totalCopies: 4,
+    availableCopies: 4,
     coverImage: 'https://images.unsplash.com/photo-1725869973689-425c74f79a48?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzY2llbmNlJTIwYm9vayUyMGNvdmVyfGVufDF8fHx8MTc2Nzk4MDI0MHww&ixlib=rb-4.1.0&q=80&w=400',
     description: 'Explores the two systems that drive the way we think and make choices.'
   },
@@ -130,6 +152,8 @@ export const mockBooks: Book[] = [
     category: 'Biography',
     publishYear: 2018,
     status: 'available',
+    totalCopies: 6,
+    availableCopies: 6,
     coverImage: 'https://images.unsplash.com/photo-1758803184789-a5dd872fe82e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBib29rJTIwY292ZXIlMjBkZXNpZ258ZW58MXx8fHwxNzY3OTgwMjQwfDA&ixlib=rb-4.1.0&q=80&w=400',
     description: 'The memoir of former First Lady of the United States Michelle Obama.'
   }

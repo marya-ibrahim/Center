@@ -1,20 +1,54 @@
-import { useState } from 'react';
-import { Container, Row, Col, Card, Form, InputGroup, Badge, Modal, Button } from 'react-bootstrap';
-import { mockBooks } from '../../data/mockBooks';
+import { useState, useEffect } from 'react';
+import { Container, Row, Col, Card, Form, InputGroup, Badge, Modal, Button, Alert, Spinner } from 'react-bootstrap';
 import { Book, User } from '../../App';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
+import { api } from '../../services/api';
+import { mockBooks } from '../../data/mockBooks';
 
 interface UserBooksPageProps {
-  user: User;
+  user: User | null;
+  onShowLogin: () => void;
 }
 
-export function UserBooksPage({ user }: UserBooksPageProps) {
-  const [books] = useState<Book[]>(mockBooks);
+export function UserBooksPage({ user, onShowLogin }: UserBooksPageProps) {
+  const [books, setBooks] = useState<Book[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [usingMockData, setUsingMockData] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [borrowing, setBorrowing] = useState(false);
+  const [borrowSuccess, setBorrowSuccess] = useState(false);
+
+  useEffect(() => {
+    loadBooks();
+  }, []);
+
+  const loadBooks = async () => {
+    setLoading(true);
+    
+    if (!api.isConfigured()) {
+      // Use mock data when backend is not configured
+      setBooks(mockBooks);
+      setUsingMockData(true);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await api.getBooks();
+      setBooks(response.books || response);
+      setUsingMockData(false);
+    } catch (err) {
+      // Fallback to mock data if API fails
+      setBooks(mockBooks);
+      setUsingMockData(true);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const categories = ['all', ...Array.from(new Set(books.map(b => b.category)))];
 
@@ -33,6 +67,38 @@ export function UserBooksPage({ user }: UserBooksPageProps) {
   const handleViewDetails = (book: Book) => {
     setSelectedBook(book);
     setShowDetailModal(true);
+    setBorrowSuccess(false);
+  };
+
+  const handleBorrowBook = async () => {
+    if (!user) {
+      setShowDetailModal(false);
+      onShowLogin();
+      return;
+    }
+
+    if (!selectedBook) return;
+
+    if (usingMockData) {
+      // Mock borrowing when using demo data
+      alert('This is a demo. Connect to the backend to enable actual borrowing.');
+      return;
+    }
+
+    setBorrowing(true);
+    try {
+      await api.borrowBook(selectedBook.id, user.id);
+      setBorrowSuccess(true);
+      await loadBooks();
+      const updatedBook = books.find(b => b.id === selectedBook.id);
+      if (updatedBook) {
+        setSelectedBook(updatedBook);
+      }
+    } catch (err: any) {
+      alert(err.message || 'Failed to borrow book. Please try again.');
+    } finally {
+      setBorrowing(false);
+    }
   };
 
   return (
@@ -50,6 +116,12 @@ export function UserBooksPage({ user }: UserBooksPageProps) {
       </div>
 
       <Container className="py-4">
+        {usingMockData && (
+          <Alert variant="info" className="mb-4">
+            <strong>Demo Mode:</strong> You're viewing sample data. To connect to the backend, update the API_BASE_URL in /services/api.ts
+          </Alert>
+        )}
+
         {/* Filters */}
         <Card className="shadow-sm border-0 mb-4">
           <Card.Body>
@@ -95,53 +167,64 @@ export function UserBooksPage({ user }: UserBooksPageProps) {
           </Card.Body>
         </Card>
 
-        {/* Books Grid */}
-        <Row className="g-4">
-          {filteredBooks.map(book => (
-            <Col key={book.id} sm={6} md={4} lg={3}>
-              <Card 
-                className="h-100 shadow-sm border-0" 
-                style={{ cursor: 'pointer', transition: 'transform 0.2s' }}
-                onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-5px)'}
-                onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-                onClick={() => handleViewDetails(book)}
-              >
-                <div style={{ height: '300px', overflow: 'hidden', backgroundColor: '#f8f9fa' }}>
-                  <ImageWithFallback
-                    src={book.coverImage || ''}
-                    alt={book.title}
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover'
-                    }}
-                  />
-                </div>
-                <Card.Body>
-                  <div className="mb-2">
-                    <Badge bg="primary" className="me-2">{book.category}</Badge>
-                    <Badge bg={book.status === 'available' ? 'success' : 'danger'}>
-                      {book.status === 'available' ? 'Available' : 'Checked Out'}
-                    </Badge>
-                  </div>
-                  <h6 className="fw-bold mb-2" style={{ 
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    display: '-webkit-box',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical'
-                  }}>
-                    {book.title}
-                  </h6>
-                  <p className="text-muted small mb-1">by {book.author}</p>
-                  <p className="text-muted small mb-0">Published: {book.publishYear}</p>
-                </Card.Body>
-              </Card>
-            </Col>
-          ))}
-        </Row>
+        {/* Loading State */}
+        {loading && (
+          <div className="text-center py-5">
+            <Spinner animation="border" variant="primary" />
+            <p className="text-muted mt-3">Loading books...</p>
+          </div>
+        )}
 
-        {filteredBooks.length === 0 && (
+        {/* Books Grid */}
+        {!loading && (
+          <Row className="g-4">
+            {filteredBooks.map(book => (
+              <Col key={book.id} sm={6} md={4} lg={3}>
+                <Card 
+                  className="h-100 shadow-sm border-0" 
+                  style={{ cursor: 'pointer', transition: 'transform 0.2s' }}
+                  onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-5px)'}
+                  onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                  onClick={() => handleViewDetails(book)}
+                >
+                  <div style={{ height: '300px', overflow: 'hidden', backgroundColor: '#f8f9fa' }}>
+                    <ImageWithFallback
+                      src={book.coverImage || ''}
+                      alt={book.title}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover'
+                      }}
+                    />
+                  </div>
+                  <Card.Body>
+                    <div className="mb-2">
+                      <Badge bg="primary" className="me-2">{book.category}</Badge>
+                      <Badge bg={book.availableCopies > 0 ? 'success' : 'danger'}>
+                        {book.availableCopies > 0 ? `${book.availableCopies} Available` : 'No Copies'}
+                      </Badge>
+                    </div>
+                    <h6 className="fw-bold mb-2" style={{ 
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical'
+                    }}>
+                      {book.title}
+                    </h6>
+                    <p className="text-muted small mb-1">by {book.author}</p>
+                    <p className="text-muted small mb-0">Published: {book.publishYear}</p>
+                    <p className="text-muted small mb-0">Copies: {book.availableCopies}/{book.totalCopies}</p>
+                  </Card.Body>
+                </Card>
+              </Col>
+            ))}
+          </Row>
+        )}
+
+        {!loading && filteredBooks.length === 0 && (
           <div className="text-center py-5">
             <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="2" className="mb-3">
               <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
@@ -160,6 +243,12 @@ export function UserBooksPage({ user }: UserBooksPageProps) {
               <Modal.Title>{selectedBook.title}</Modal.Title>
             </Modal.Header>
             <Modal.Body>
+              {borrowSuccess && (
+                <Alert variant="success">
+                  Book borrowed successfully! Check your account for due date.
+                </Alert>
+              )}
+
               <Row>
                 <Col md={4}>
                   <ImageWithFallback
@@ -178,8 +267,8 @@ export function UserBooksPage({ user }: UserBooksPageProps) {
                     <p className="text-muted mb-1">by {selectedBook.author}</p>
                     <div className="mb-3">
                       <Badge bg="primary" className="me-2">{selectedBook.category}</Badge>
-                      <Badge bg={selectedBook.status === 'available' ? 'success' : 'danger'}>
-                        {selectedBook.status === 'available' ? 'Available' : 'Checked Out'}
+                      <Badge bg={selectedBook.availableCopies > 0 ? 'success' : 'danger'}>
+                        {selectedBook.availableCopies > 0 ? `${selectedBook.availableCopies} Available` : 'No Copies'}
                       </Badge>
                     </div>
                   </div>
@@ -187,6 +276,8 @@ export function UserBooksPage({ user }: UserBooksPageProps) {
                   <div className="mb-3">
                     <p className="mb-1"><strong>ISBN:</strong> <code>{selectedBook.isbn}</code></p>
                     <p className="mb-1"><strong>Published:</strong> {selectedBook.publishYear}</p>
+                    <p className="mb-1"><strong>Total Copies:</strong> {selectedBook.totalCopies}</p>
+                    <p className="mb-1"><strong>Available Copies:</strong> {selectedBook.availableCopies}</p>
                   </div>
 
                   {selectedBook.description && (
@@ -201,6 +292,12 @@ export function UserBooksPage({ user }: UserBooksPageProps) {
                       <strong>Due Date:</strong> {selectedBook.dueDate}
                     </div>
                   )}
+
+                  {!user && selectedBook.status === 'available' && (
+                    <Alert variant="info">
+                      Please sign in to borrow this book.
+                    </Alert>
+                  )}
                 </Col>
               </Row>
             </Modal.Body>
@@ -208,15 +305,28 @@ export function UserBooksPage({ user }: UserBooksPageProps) {
               <Button variant="secondary" onClick={() => setShowDetailModal(false)}>
                 Close
               </Button>
-              {selectedBook.status === 'available' && (
+              {selectedBook.availableCopies > 0 && (
                 <Button 
                   variant="primary"
+                  onClick={handleBorrowBook}
+                  disabled={borrowing || borrowSuccess}
                   style={{
                     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                     border: 'none'
                   }}
                 >
-                  Request to Borrow
+                  {borrowing ? (
+                    <>
+                      <Spinner animation="border" size="sm" className="me-2" />
+                      Borrowing...
+                    </>
+                  ) : borrowSuccess ? (
+                    'Borrowed!'
+                  ) : user ? (
+                    'Borrow Book'
+                  ) : (
+                    'Sign In to Borrow'
+                  )}
                 </Button>
               )}
             </Modal.Footer>

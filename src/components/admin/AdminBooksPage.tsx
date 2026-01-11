@@ -1,16 +1,20 @@
-import { useState } from 'react';
-import { Container, Row, Col, Card, Form, InputGroup, Button, Badge, Modal, Table } from 'react-bootstrap';
-import { mockBooks } from '../../data/mockBooks';
+import { useState, useEffect } from 'react';
+import { Container, Row, Col, Card, Form, InputGroup, Button, Badge, Modal, Table, Spinner, Alert } from 'react-bootstrap';
 import { Book } from '../../App';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
+import { api } from '../../services/api';
+import { mockBooks } from '../../data/mockBooks';
 
 export function AdminBooksPage() {
-  const [books, setBooks] = useState<Book[]>(mockBooks);
+  const [books, setBooks] = useState<Book[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [usingMockData, setUsingMockData] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
+  const [saving, setSaving] = useState(false);
   
   const [formData, setFormData] = useState({
     title: '',
@@ -21,6 +25,34 @@ export function AdminBooksPage() {
     coverImage: '',
     description: ''
   });
+
+  useEffect(() => {
+    loadBooks();
+  }, []);
+
+  const loadBooks = async () => {
+    setLoading(true);
+    
+    if (!api.isConfigured()) {
+      // Use mock data when backend is not configured
+      setBooks(mockBooks);
+      setUsingMockData(true);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await api.getBooks();
+      setBooks(response.books || response);
+      setUsingMockData(false);
+    } catch (err) {
+      // Fallback to mock data if API fails
+      setBooks(mockBooks);
+      setUsingMockData(true);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const categories = ['all', ...Array.from(new Set(books.map(b => b.category)))];
 
@@ -35,32 +67,59 @@ export function AdminBooksPage() {
     return matchesSearch && matchesCategory;
   });
 
-  const handleAddBook = () => {
-    const newBook: Book = {
-      ...formData,
-      id: Date.now().toString(),
-      status: 'available'
-    };
-    setBooks([...books, newBook]);
-    setShowAddModal(false);
-    resetForm();
-  };
+  const handleAddBook = async () => {
+    if (usingMockData) {
+      alert('This is a demo. Connect to the backend to enable book management.');
+      return;
+    }
 
-  const handleEditBook = () => {
-    if (selectedBook) {
-      setBooks(books.map(book => 
-        book.id === selectedBook.id 
-          ? { ...book, ...formData }
-          : book
-      ));
-      setShowEditModal(false);
+    setSaving(true);
+    try {
+      await api.createBook(formData);
+      await loadBooks();
+      setShowAddModal(false);
       resetForm();
+    } catch (err: any) {
+      alert(err.message || 'Failed to add book. Please try again.');
+    } finally {
+      setSaving(false);
     }
   };
 
-  const handleDeleteBook = (bookId: string) => {
-    if (window.confirm('Are you sure you want to delete this book?')) {
-      setBooks(books.filter(book => book.id !== bookId));
+  const handleEditBook = async () => {
+    if (usingMockData) {
+      alert('This is a demo. Connect to the backend to enable book management.');
+      return;
+    }
+
+    if (!selectedBook) return;
+    
+    setSaving(true);
+    try {
+      await api.updateBook(selectedBook.id, formData);
+      await loadBooks();
+      setShowEditModal(false);
+      resetForm();
+    } catch (err: any) {
+      alert(err.message || 'Failed to update book. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteBook = async (bookId: string) => {
+    if (usingMockData) {
+      alert('This is a demo. Connect to the backend to enable book management.');
+      return;
+    }
+
+    if (!window.confirm('Are you sure you want to delete this book?')) return;
+    
+    try {
+      await api.deleteBook(bookId);
+      await loadBooks();
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete book. Please try again.');
     }
   };
 
@@ -115,6 +174,12 @@ export function AdminBooksPage() {
         </Button>
       </div>
 
+      {usingMockData && (
+        <Alert variant="warning" className="mb-4">
+          <strong>Demo Mode:</strong> You're viewing sample data. Book management is disabled. To enable full functionality, update the API_BASE_URL in /services/api.ts and connect to your backend.
+        </Alert>
+      )}
+
       {/* Filters */}
       <Card className="shadow-sm border-0 mb-4">
         <Card.Body>
@@ -150,89 +215,99 @@ export function AdminBooksPage() {
         </Card.Body>
       </Card>
 
-      {/* Books Table */}
-      <Card className="shadow-sm border-0">
-        <Card.Body className="p-0">
-          <div className="table-responsive">
-            <Table hover className="mb-0">
-              <thead style={{ backgroundColor: '#f8f9fa' }}>
-                <tr>
-                  <th style={{ width: '80px' }}>Cover</th>
-                  <th>Title</th>
-                  <th>Author</th>
-                  <th>ISBN</th>
-                  <th>Category</th>
-                  <th>Year</th>
-                  <th>Status</th>
-                  <th style={{ width: '150px' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredBooks.map(book => (
-                  <tr key={book.id}>
-                    <td>
-                      <ImageWithFallback
-                        src={book.coverImage || ''}
-                        alt={book.title}
-                        style={{
-                          width: '50px',
-                          height: '70px',
-                          objectFit: 'cover',
-                          borderRadius: '4px'
-                        }}
-                      />
-                    </td>
-                    <td className="align-middle">
-                      <strong>{book.title}</strong>
-                    </td>
-                    <td className="align-middle">{book.author}</td>
-                    <td className="align-middle">
-                      <code style={{ fontSize: '0.85rem' }}>{book.isbn}</code>
-                    </td>
-                    <td className="align-middle">
-                      <Badge bg="primary">{book.category}</Badge>
-                    </td>
-                    <td className="align-middle">{book.publishYear}</td>
-                    <td className="align-middle">
-                      <Badge bg={book.status === 'available' ? 'success' : 'danger'}>
-                        {book.status === 'available' ? 'Available' : 'Checked Out'}
-                      </Badge>
-                    </td>
-                    <td className="align-middle">
-                      <div className="d-flex gap-2">
-                        <Button
-                          variant="outline-primary"
-                          size="sm"
-                          onClick={() => openEditModal(book)}
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          variant="outline-danger"
-                          size="sm"
-                          onClick={() => handleDeleteBook(book.id)}
-                        >
-                          Delete
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-          </div>
+      {/* Loading State */}
+      {loading && (
+        <div className="text-center py-5">
+          <Spinner animation="border" variant="primary" />
+          <p className="text-muted mt-3">Loading books...</p>
+        </div>
+      )}
 
-          {filteredBooks.length === 0 && (
-            <div className="text-center py-5 text-muted">
-              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mb-3">
-                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-              </svg>
-              <p>No books found</p>
+      {/* Books Table */}
+      {!loading && (
+        <Card className="shadow-sm border-0">
+          <Card.Body className="p-0">
+            <div className="table-responsive">
+              <Table hover className="mb-0">
+                <thead style={{ backgroundColor: '#f8f9fa' }}>
+                  <tr>
+                    <th style={{ width: '80px' }}>Cover</th>
+                    <th>Title</th>
+                    <th>Author</th>
+                    <th>ISBN</th>
+                    <th>Category</th>
+                    <th>Year</th>
+                    <th>Status</th>
+                    <th style={{ width: '150px' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredBooks.map(book => (
+                    <tr key={book.id}>
+                      <td>
+                        <ImageWithFallback
+                          src={book.coverImage || ''}
+                          alt={book.title}
+                          style={{
+                            width: '50px',
+                            height: '70px',
+                            objectFit: 'cover',
+                            borderRadius: '4px'
+                          }}
+                        />
+                      </td>
+                      <td className="align-middle">
+                        <strong>{book.title}</strong>
+                      </td>
+                      <td className="align-middle">{book.author}</td>
+                      <td className="align-middle">
+                        <code style={{ fontSize: '0.85rem' }}>{book.isbn}</code>
+                      </td>
+                      <td className="align-middle">
+                        <Badge bg="primary">{book.category}</Badge>
+                      </td>
+                      <td className="align-middle">{book.publishYear}</td>
+                      <td className="align-middle">
+                        <Badge bg={book.status === 'available' ? 'success' : 'danger'}>
+                          {book.status === 'available' ? 'Available' : 'Checked Out'}
+                        </Badge>
+                      </td>
+                      <td className="align-middle">
+                        <div className="d-flex gap-2">
+                          <Button
+                            variant="outline-primary"
+                            size="sm"
+                            onClick={() => openEditModal(book)}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            variant="outline-danger"
+                            size="sm"
+                            onClick={() => handleDeleteBook(book.id)}
+                          >
+                            Delete
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
             </div>
-          )}
-        </Card.Body>
-      </Card>
+
+            {filteredBooks.length === 0 && (
+              <div className="text-center py-5 text-muted">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mb-3">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                </svg>
+                <p>No books found</p>
+              </div>
+            )}
+          </Card.Body>
+        </Card>
+      )}
 
       {/* Add Book Modal */}
       <Modal show={showAddModal} onHide={() => { setShowAddModal(false); resetForm(); }} size="lg" centered>
@@ -335,12 +410,13 @@ export function AdminBooksPage() {
           <Button 
             variant="primary" 
             onClick={handleAddBook}
+            disabled={saving}
             style={{
               background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
               border: 'none'
             }}
           >
-            Add Book
+            {saving ? 'Adding...' : 'Add Book'}
           </Button>
         </Modal.Footer>
       </Modal>
@@ -443,12 +519,13 @@ export function AdminBooksPage() {
           <Button 
             variant="primary" 
             onClick={handleEditBook}
+            disabled={saving}
             style={{
               background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
               border: 'none'
             }}
           >
-            Save Changes
+            {saving ? 'Saving...' : 'Save Changes'}
           </Button>
         </Modal.Footer>
       </Modal>
